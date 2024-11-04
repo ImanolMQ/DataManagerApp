@@ -6,8 +6,8 @@ Created on Mon Oct 28 16:10:49 2024
 """
 
 import streamlit as st
-from modules.data_manager import DataManager
-from modules.streamlit.auxiliar import filter_dataframe
+from src.data_manager import DataManager
+from src.streamlit.auxiliar import filter_dataframe
 from pandas.api.types import is_numeric_dtype
 
 

@@ -5,9 +5,9 @@ Created on Mon Oct 28 16:08:58 2024
 @author: Imanol
 """
 import streamlit as st
-from modules.data_manager import DataManager
-from modules.streamlit.auxiliar import filter_dataframe
-from modules.streamlit.display_graphs import GraphsDisplayer
+from src.data_manager import DataManager
+from src.streamlit.auxiliar import filter_dataframe
+from src.streamlit.display_graphs import GraphsDisplayer
 from pandas.api.types import is_numeric_dtype
 
 

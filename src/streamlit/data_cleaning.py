@@ -6,7 +6,7 @@ Created on Mon Oct 28 16:10:15 2024
 """
 
 import streamlit as st
-from modules.streamlit.auxiliar import filter_dataframe
+from src.streamlit.auxiliar import filter_dataframe
 
 class DataCleaner():
     

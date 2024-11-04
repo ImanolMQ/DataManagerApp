@@ -7,7 +7,7 @@ Created on Mon Oct 28 16:11:32 2024
 
 import os
 import pandas as pd
-from modules.data_manager import DataManager
+from src.data_manager import DataManager
 import streamlit as st
 from pandas.api.types import (
     is_categorical_dtype,

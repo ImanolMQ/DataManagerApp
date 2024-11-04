@@ -7,7 +7,7 @@ Created on Sun Oct 27 12:38:23 2024
 
 import pandas as pd
 import streamlit as st
-from modules.auxiliar import ExtraInformation
+from src.auxiliar import ExtraInformation
 
 # Configuración inicial
 st.set_page_config(page_title="Carga de Dataset")
