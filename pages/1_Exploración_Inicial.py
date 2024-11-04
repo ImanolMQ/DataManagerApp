@@ -4,8 +4,8 @@ Created on Sat Oct 26 15:25:45 2024
 
 @author: Imanol
 """
-from modules.streamlit.initial_exploration import DataExplorer
-from modules.data_manager import DataManager
+from src.streamlit.initial_exploration import DataExplorer
+from src.data_manager import DataManager
 import streamlit as st
 
 

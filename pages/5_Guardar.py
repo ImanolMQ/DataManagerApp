@@ -7,7 +7,7 @@ Created on Sun Oct 27 12:11:06 2024
 
 
 import streamlit as st
-from modules.streamlit.auxiliar import save_df
+from src.streamlit.auxiliar import save_df
 
 PAGE_CONFIG = {"page_title":"Guardar", 
                "layout":"wide"}

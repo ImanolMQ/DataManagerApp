@@ -6,8 +6,8 @@ Created on Sun Oct 27 12:10:40 2024
 """
 
 import streamlit as st
-from modules.data_manager import DataManager
-from modules.streamlit.display_graphs import GraphsDisplayer
+from src.data_manager import DataManager
+from src.streamlit.display_graphs import GraphsDisplayer
 
 PAGE_CONFIG = {"page_title":"Visualización", 
                "layout":"wide"}

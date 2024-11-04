@@ -6,8 +6,8 @@ Created on Sat Oct 26 15:35:55 2024
 """
 
 import streamlit as st
-from modules.data_manager import DataManager
-from modules.streamlit.data_cleaning import DataCleaner
+from src.data_manager import DataManager
+from src.streamlit.data_cleaning import DataCleaner
 
 
 PAGE_CONFIG = {"page_title":"Limpieza de datos", 
