@@ -56,7 +56,7 @@ Este proyecto está licenciado bajo la **Apache License 2.0**. Puedes ver más d
 Si estás interesado en contribuir a este proyecto, ¡será bienvenido! Por favor, abre un issue o un pull request para cualquier mejora o funcionalidad adicional.
 
 ## Contacto
-Para cualquier consulta, puedes ponerte en contacto a través de [ImanolMQ].
+Para cualquier consulta, puedes ponerte en contacto a través de [ImanolMQ](https://github.com/ImanolMQ).
 
 ---
 
