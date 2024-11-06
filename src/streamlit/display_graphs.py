@@ -31,11 +31,13 @@ class GraphsDisplayer():
             
             plot_options = (['histogram', 'boxplot', 'violinplot', 'heatmap',
                              'corr', 'pairplot'] if is_numeric_dtype(df[cols[0]])
-                            else ['donut', 'value_counts'])
+                            else ['donut', 'value_counts', 'proportional_value_count'])
                 
             # Mostrar captions y estadísticas de los datos numéricos
             seleccion = st.selectbox("Selecciona una opción:", plot_options,
                                      key=key+'_show_plots')
+            proportional = seleccion == 'proportional_value_count'
+            seleccion = seleccion if not proportional else 'value_counts'
             
             # Diccionario de gráficos y funciones correspondientes para reducir if-else
             plot_funcs = {
@@ -45,7 +47,7 @@ class GraphsDisplayer():
                 'heatmap': lambda: DataManager(df[cols]).show_heatmap_st(),
                 'corr': lambda: st.table(df[cols].corr()),
                 'donut': lambda: DataManager(df[cols]).show_donuts(traspuesta),
-                'value_counts': lambda: DataManager(df[cols]).show_value_counts(traspuesta),
+                'value_counts': lambda: DataManager(df[cols]).show_value_counts(traspuesta,proportional=proportional),
                 'pairplot': lambda: DataManager(df[cols]).show_pairplot_st()
             }
 

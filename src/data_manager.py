@@ -176,7 +176,8 @@ class DataManager():
             axes[idx] = sns.FacetGrid(self.df, col=self.category)
             axes[idx].map(sns.histplot, variable)
             
-    def _configure_plot_simple_2(self, fig, type_name, traspuesta, variable, row, col):
+    def _configure_plot_simple_2(self, fig, type_name, traspuesta, variable,
+                                 row, col, proportional):
 
         plot_axe = 'x'
         color='#FF4B4B'
@@ -214,7 +215,7 @@ class DataManager():
         if type_name == 'value_counts':
             counts = self.df_cat[variable].value_counts()
             categories = counts.index.tolist()
-            values = counts.values
+            values =  counts.values * (100 if proportional else 1)
             
             plot_axe_x = 'y' if traspuesta else 'x'
             plot_axe_y = 'x' if traspuesta else 'y'
@@ -240,8 +241,8 @@ class DataManager():
                                                                  ncolors)
             min_percentage = 5
             total = sum(values)
-            #percentages = [(v / total) * 100 for v in values]
-            percentages = [v for v in values]
+            percentages = [(v / total) * 100 for v in values]
+            
             text_template = [f"<b>{percent:.1f}%</b>"
                              if percent >= min_percentage else ""
                              for label, percent in zip(labels, percentages)]
@@ -347,7 +348,7 @@ class DataManager():
         #self._finalize_plot(suptitle)
         return fig
     
-    def _show_plot_2(self, traspuesta, suptitle, type_name, cols):
+    def _show_plot_2(self, traspuesta, suptitle, type_name, cols, proportional):
         """Mostrar el tipo de gráfica solicitada"""
         categoricals = ['value_counts', 'donut']
  
@@ -372,7 +373,7 @@ class DataManager():
             
             # Generar gráficos según el tipo de gráfico
             self._configure_plot_simple_2(fig, type_name, traspuesta,
-                                          variable, row, col)
+                                          variable, row, col, proportional)
 
             
                 
@@ -398,9 +399,9 @@ class DataManager():
         return self._show_plot_2(traspuesta, "Frecuencia de Variables Numéricas",
                         "violinplot", cols)
 
-    def show_value_counts(self, traspuesta=False, cols=None):
+    def show_value_counts(self, traspuesta=False, cols=None, proportional=False):
         return self._show_plot_2(traspuesta, "Frecuencia de Variables Categóricas",
-                        "value_counts", cols)
+                        "value_counts", cols, proportional)
 
     def show_heatmap(self):
         """Mostrar mapa de calor de correlación"""
