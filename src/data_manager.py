@@ -348,7 +348,7 @@ class DataManager():
         #self._finalize_plot(suptitle)
         return fig
     
-    def _show_plot_2(self, traspuesta, suptitle, type_name, cols, proportional):
+    def _show_plot_2(self, traspuesta, suptitle, type_name, cols, proportional=False):
         """Mostrar el tipo de gráfica solicitada"""
         categoricals = ['value_counts', 'donut']
  
