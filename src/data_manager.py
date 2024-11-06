@@ -765,7 +765,7 @@ class DataManager():
     def save_df(self, path):
         self.df.to_csv(path, index=False, sep=';')
         
-    def input_vals(self, cols, select):     
+    def input_vals(self, cols, select, eval_method=None):     
         imputations = {
         0: lambda col: self.df[col].fillna(self.df[col].mean()),     # Media
         1: lambda col: self.df[col].fillna(self.df[col].median()),   # Mediana
@@ -780,15 +780,23 @@ class DataManager():
         else:
             raise ValueError("Valor de select no válido. Debe ser 0, 1, 2, 3 o 4.")
             
-    def drop_na(self, axis, cols=None):
-        if axis==0 or (axis==1 and not cols):
-            self.df.dropna(axis=axis, subset=cols, inplace=True)
+    def drop_na(self, axis, cols=None, eval_method='any'):
+        
+        cols = cols if (isinstance(cols, (list, tuple)) and
+                        not cols == None) else [cols]
+        
+        if axis==0 and cols:
+            cols = cols if isinstance(cols, (list, tuple)) else [cols]
+            self.df.dropna(axis=0, how=eval_method, subset=cols, inplace=True)
         
         if axis==1 and cols:
-            cols = cols if isinstance(cols, list) else [cols]
-            for col in cols:
-                if self.df[col].isnull().any():
-                    self.df.drop(col, axis=1, inplace=True)
+            
+            if eval_method == 'any':
+                self.df.drop(columns=[col for col in cols if self.df[col].isnull().any()],
+                        inplace=True)
+            if eval_method == 'all':
+               self.df.drop(columns=[col for col in cols if self.df[col].isnull().all()],
+                        inplace=True)
                 
         self.tot_columns = self.df.columns.tolist()
         self.split_df()
@@ -809,6 +817,14 @@ class DataManager():
     def show_duplicates(self, cols=None, keep='first'):
         df = self.df.copy()
         return df[df.duplicated(subset=cols, keep=keep)]
+    
+    def show_nulls(self, cols=None, eval_method='any'):
+        df = self.df.copy()
+        if eval_method == 'any':
+            df = df[df[cols].isnull().any(axis=1)]
+        if eval_method == 'all':
+            df = df[df[cols].isnull().all(axis=1)]
+        return df.copy(), eval_method, cols
         
         
     def delete_columns(self, cols):
@@ -879,3 +895,20 @@ if __name__ == "__main__":
     color = DataManager.hex_to_rgb('#FF4B4B')
     df['Curricular units 1st sem (grade)'].max()
     df.iloc[0]
+
+df = pd.DataFrame(dict(age=[5, 6, np.nan],
+                       born=[pd.NaT, pd.Timestamp('1939-05-27'),
+                             pd.Timestamp('1940-04-25')],
+                       name=[None,None,None],
+                       toy=[None, 'Batmobile', 'Joker']))
+df
+#df[['born', 'name']].isnull().any().any()
+
+df.dropna(axis=0, how='any', subset=['age','toy'], inplace=True) ## Eliminar filas en las que cualquiera de las columnas sea nulo
+df
+df.dropna(axis=0, how='all', subset=['age','toy'], inplace=True) ## Eliminar filas en las que todas las columnas seleccionadas sean nulo
+df
+
+df.drop(columns=[col for col in ['age'] if df[col].isnull().any()], inplace=True) ## Eliminar columna en la que tenga algun valor nulo
+df.drop(columns=[col for col in ['age'] if df[col].isnull().all()], inplace=True) ## Eliminar columna en la que tenga todos los valores nulos
+

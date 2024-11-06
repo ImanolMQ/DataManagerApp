@@ -39,10 +39,24 @@ class DataCleaner():
         with tab:
             col1, col2 = st.columns([1, 2])
             with col1:
-                action()
+                if key == "tab0":
+                    df_nulls, method , columns = action()
+                else:
+                    action()
             with col2:
-                st.dataframe(filter_dataframe(self.dm.df.copy(), key=key),
-                             height=self.height)
+                if key == "tab0":
+                    conector = 'y' if method == 'all' else 'o'
+                    text = ''
+                    for i, name in enumerate(columns):
+                        if not i == 0:
+                            text += ' ' + conector
+                        text +=  ' ' + name
+                    st.markdown(f"Hay {df_nulls.shape[0]} registros que tienen" +
+                                " valores nulos en" + text + ".")
+                    st.dataframe(df_nulls, key=key, height=self.height)
+                else:
+                    st.dataframe(filter_dataframe(self.dm.df.copy(), key=key),
+                                 height=self.height)
         
     def change_name_columns(self):
         options = self.dm.tot_columns
@@ -99,6 +113,7 @@ class DataCleaner():
         return new_categories if len(new_categories) == len(categories) else None
 
     def edit_null_values(self):
+        
         # Reestructuración de imputación y eliminación de valores nulos
         options = {
             'Elimina filas': (self.dm.drop_na, 0),
@@ -108,12 +123,52 @@ class DataCleaner():
             'Imputar con la moda': self._impute_vals(2),
             'Imputar con valor anterior': self._impute_vals(3)
         }
-        method = st.radio("Selecciona cómo tratar valores nulos:", list(options.keys()))
-        selected_cols = st.multiselect("Columnas específicas:", self.dm.tot_columns)
+        method = st.radio("Selecciona cómo tratar valores nulos:",
+                          list(options.keys()))
+        
+        if method.split()[0] == 'Elimina':
+            evaluation_methods = ['any (Hay valor nulo en alguna de las columnas seleccionadas)',
+                                  'all (Todas las columnas seleccionadas son nulas)']
+            selected_evaluation = st.selectbox("Especifica el método de evaluación:", 
+                                         evaluation_methods)
+            selected_evaluation = selected_evaluation.split()[0]
+                
+            cols = self.dm.tot_columns
+            text = ("Especifica las columnas a las que" +
+                    " tratar los valores nulos (si no se" +
+                    " escogen se tratarán todas las columnas):")
+            if selected_evaluation == 'any':
+                if method == 'Elimina filas':
+                    text = ('Especifica que columnas quieres ver si tienen algun ' +
+                            'valor nulo en los registros:')
+                if method == 'Elimina columnas':
+                    text = ('Especifica que columnas quieres eliminar si tienen algun ' +
+                            'valor nulo:')
+            if selected_evaluation == 'all':
+                if method == 'Elimina filas':
+                    text = ('Especifica que columnas quieres ver que coincide que ' +
+                            'tengan valores nulos a la vez en un registro:')
+                if method == 'Elimina columnas':
+                    text = ('Especifica que columnas quieres eliminar si tienen' +
+                            ' todos los valores nulos:')
+        if method.split()[0] == 'Imputar':
+            text = ('Especifica en que columnas quieres imputar valores:')
+            selected_evaluation = 'any'
+            cols = self.dm.num_columns
+            
+        selected_cols = st.multiselect(text,
+                                       cols)
+        selected_cols = cols if not selected_cols else selected_cols
+        
+        # if st.checkbox('Mostrar filas con valores nulos de las columnas' +
+        #                 ' introducidas'):
+        #st.dataframe(self.dm.show_nulls(selected_cols, selected_evaluation))
         
         if st.button("Aplicar", use_container_width=True):
-            func, param = options[method]
-            func(selected_cols) if isinstance(func, callable) else func
+            func, axis = options[method]
+            func(axis, selected_cols, selected_evaluation)
+            
+        return self.dm.show_nulls(selected_cols, selected_evaluation)
 
     def _impute_vals(self, imp_type):
         return lambda cols: self.dm.input_vals(cols, imp_type)
