@@ -216,7 +216,7 @@ class DataManager():
             counts = self.df_cat[variable].value_counts()
             n = self.df_cat[variable].shape[0]
             categories = counts.index.tolist()
-            values =  counts.values * (100/n if proportional else 1)
+            values =  counts.values * (1/n if proportional else 1)
             
             plot_axe_x = 'y' if traspuesta else 'x'
             plot_axe_y = 'x' if traspuesta else 'y'
