@@ -230,10 +230,6 @@ class DataManager():
                 row=row, col=col
             )
             
-            if proportional:
-                fig.update_traces(texttemplate='%{y:.2f}%',
-                                  textposition='outside', showlegend=False)
-            
             
         if type_name == 'donut':
             colors = ['#FF4B4B', '#31333F']
