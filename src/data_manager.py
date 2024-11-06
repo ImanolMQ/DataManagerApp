@@ -240,8 +240,8 @@ class DataManager():
                                                                  ncolors)
             min_percentage = 5
             total = sum(values)
-            percentages = [(v / total) * 100 for v in values]
-    
+            #percentages = [(v / total) * 100 for v in values]
+            percentages = [v for v in values]
             text_template = [f"<b>{percent:.1f}%</b>"
                              if percent >= min_percentage else ""
                              for label, percent in zip(labels, percentages)]
