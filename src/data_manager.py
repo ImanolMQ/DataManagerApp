@@ -804,10 +804,13 @@ class DataManager():
         self.n_rows = self.df.shape[0]
         self.n_columns = self.df.shape[1]
         
-    def drop_duplicates(self, cols=None):
-        if cols:
-            cols = cols if isinstance(cols, list) else [cols]
-        self.df.drop_duplicates(subset=cols, inplace=True)
+    def drop_duplicates(self, cols=None, keep='first'):
+        
+        df = self.show_duplicates(cols, keep)
+        idx = df.index.tolist()
+        
+        if idx:
+            self.df.drop(index=idx, inplace=True)
         self.tot_columns = self.df.columns.tolist()
         self.split_df()
         self.shape = self.df.shape
@@ -815,8 +818,12 @@ class DataManager():
         self.n_columns = self.df.shape[1]
         
     def show_duplicates(self, cols=None, keep='first'):
-        df = self.df.copy()
-        return df[df.duplicated(subset=cols, keep=keep)]
+        if cols == None:
+            cols = self.tot_columns
+            
+        df = self.df[cols].copy()
+        
+        return self.df[df.duplicated(keep=keep)].copy()
     
     def show_nulls(self, cols=None, eval_method='any'):
         df = self.df.copy()
@@ -901,14 +908,3 @@ df = pd.DataFrame(dict(age=[5, 6, np.nan],
                              pd.Timestamp('1940-04-25')],
                        name=[None,None,None],
                        toy=[None, 'Batmobile', 'Joker']))
-df
-#df[['born', 'name']].isnull().any().any()
-
-df.dropna(axis=0, how='any', subset=['age','toy'], inplace=True) ## Eliminar filas en las que cualquiera de las columnas sea nulo
-df
-df.dropna(axis=0, how='all', subset=['age','toy'], inplace=True) ## Eliminar filas en las que todas las columnas seleccionadas sean nulo
-df
-
-df.drop(columns=[col for col in ['age'] if df[col].isnull().any()], inplace=True) ## Eliminar columna en la que tenga algun valor nulo
-df.drop(columns=[col for col in ['age'] if df[col].isnull().all()], inplace=True) ## Eliminar columna en la que tenga todos los valores nulos
-

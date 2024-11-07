@@ -53,10 +53,11 @@ class DataCleaner():
                         text +=  ' ' + name
                     st.markdown(f"Hay {df_nulls.shape[0]} registros que tienen" +
                                 " valores nulos en" + text + ".")
-                    st.dataframe(df_nulls, key=key, height=self.height)
+                    st.dataframe(df_nulls, key=key, height=self.height,
+                                 use_container_width=True)
                 else:
                     st.dataframe(filter_dataframe(self.dm.df.copy(), key=key),
-                                 height=self.height)
+                                 height=self.height, use_container_width=True)
         
     def change_name_columns(self):
         options = self.dm.tot_columns
@@ -192,7 +193,13 @@ class DataCleaner():
         else:
             st.dataframe(df_filtered)
             
-    def drop_duplicates(self, cols=None):
+    def drop_duplicates(self):
+        cols = st.multiselect('Selecciona conjunto de columnas para ver si ' +
+                              'estan duplicadas:\n\n (Si no se selecciona ' +
+                              'ninguna se comprobará si hay filas duplicadas)',
+                              self.dm.tot_columns)
+        cols = cols if cols else self.dm.tot_columns
+        
         self.show_duplicates(cols)
         if st.button("Eliminar duplicados", use_container_width=True):
             self.dm.drop_duplicates(cols)
@@ -200,7 +207,7 @@ class DataCleaner():
     def show_duplicates(self, cols=None):
         df_dups = self.dm.show_duplicates(cols)
         st.header(f"Registros duplicados: {len(df_dups)}")
-        st.dataframe(df_dups, height=373)
+        st.dataframe(df_dups, height=290, use_container_width=True)
 
     def normalize_and_standarize(self):
         options = {
