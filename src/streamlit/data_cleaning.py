@@ -127,30 +127,34 @@ class DataCleaner():
                           list(options.keys()))
         
         if method.split()[0] == 'Elimina':
-            evaluation_methods = ['any (Hay valor nulo en alguna de las columnas seleccionadas)',
-                                  'all (Todas las columnas seleccionadas son nulas)']
-            selected_evaluation = st.selectbox("Especifica el método de evaluación:", 
-                                         evaluation_methods)
-            selected_evaluation = selected_evaluation.split()[0]
-                
+            txt_rows = ("Opción 1. Hay un valor nulo en alguna de las columnas seleccionadas\n\n" +
+                        "Opción 2. Todas las columnas seleccionadas son nulas")
+            txt_cols = ("Opción 1. La columna tiene algún valor nulo \n\n" +
+                        "Opción 2. La columna tiene todos los valores nulos")
+            txt_methods = txt_rows if method == 'Elimina filas' else txt_cols
+            evaluation_methods = {'Opción 1':'any', 'Opción 2':'all'}
+            selected_evaluation = st.selectbox("Especifica el método de evaluación:\n\n" +
+                                               txt_methods,
+                                               evaluation_methods.keys())
+            selected_evaluation = evaluation_methods[selected_evaluation]
+            txt_default = '(Si no se escogen se evaluarán todas las columnas):'
             cols = self.dm.tot_columns
             text = ("Especifica las columnas a las que" +
-                    " tratar los valores nulos (si no se" +
-                    " escogen se tratarán todas las columnas):")
+                    " tratar los valores nulos " + txt_default)
             if selected_evaluation == 'any':
                 if method == 'Elimina filas':
                     text = ('Especifica que columnas quieres ver si tienen algun ' +
-                            'valor nulo en los registros:')
+                            'valor nulo en los registros ' + txt_default)
                 if method == 'Elimina columnas':
                     text = ('Especifica que columnas quieres eliminar si tienen algun ' +
-                            'valor nulo:')
+                            'valor nulo ' + txt_default)
             if selected_evaluation == 'all':
                 if method == 'Elimina filas':
                     text = ('Especifica que columnas quieres ver que coincide que ' +
-                            'tengan valores nulos a la vez en un registro:')
+                            'tengan valores nulos a la vez en un registro '  + txt_default)
                 if method == 'Elimina columnas':
                     text = ('Especifica que columnas quieres eliminar si tienen' +
-                            ' todos los valores nulos:')
+                            ' todos los valores nulos ' + txt_default)
         if method.split()[0] == 'Imputar':
             text = ('Especifica en que columnas quieres imputar valores:')
             selected_evaluation = 'any'
@@ -188,13 +192,13 @@ class DataCleaner():
         else:
             st.dataframe(df_filtered)
             
-    def drop_duplicates(self):
-        self.show_duplicates()
+    def drop_duplicates(self, cols=None):
+        self.show_duplicates(cols)
         if st.button("Eliminar duplicados", use_container_width=True):
-            self.dm.drop_duplicates()
+            self.dm.drop_duplicates(cols)
 
-    def show_duplicates(self):
-        df_dups = self.dm.show_duplicates()
+    def show_duplicates(self, cols=None):
+        df_dups = self.dm.show_duplicates(cols)
         st.header(f"Registros duplicados: {len(df_dups)}")
         st.dataframe(df_dups, height=373)
 
