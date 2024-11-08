@@ -24,7 +24,7 @@ class DataExplorer():
                 
         with tab1:
             st.dataframe(filter_dataframe(self.dm.df.copy(), key='tab1',
-                                          cut=True))           
+                                          cut=True), use_container_width=True)           
         with tab2:
             self.show_df_info()
             

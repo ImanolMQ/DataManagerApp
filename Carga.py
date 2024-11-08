@@ -89,7 +89,7 @@ if st.button("Cargar DataFrame"):
             
             # Vista previa del DataFrame
             st.write("Vista previa del DataFrame:")
-            st.write(df.head())
+            st.dataframe(df.head(), use_container_width=True)
 
         except Exception as e:
             st.error(f"No se pudo cargar el DataFrame. Error: {e}")
