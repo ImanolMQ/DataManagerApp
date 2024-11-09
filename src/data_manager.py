@@ -719,42 +719,24 @@ class DataManager():
     def is_categorical(var_type):
         return var_type in ('object', 'category', 'string', 'datetime')
         
-        
-    @staticmethod
-    def adjust_col(col, new_type):
-        if (DataManager.is_categorical(col.dtypes) and 
-            not DataManager.is_categorical(new_type)):
-            col = col.astype('category').cat.codes
-        return col  
-        
     def change_type(self, cols, new_type, new_categories=None, date_format=None):
-        type_map = {
-            'int': lambda x: pd.to_numeric(x, errors='coerce').astype('int64'),
-            'float': lambda x: pd.to_numeric(x, errors='coerce').astype('float'),
-            'category': lambda x: x.astype('category'),
-            'datetime': lambda x: pd.to_datetime(x, errors='coerce',
-                                                 format = date_format),
-            'string': lambda x: x.astype('string')
-            }
-        
-        
         try:
-            data = self.df[cols].copy()
-            print(data)
-            data = data if isinstance(data, pd.DataFrame) else pd.DataFrame(data)
-            data = data.apply(lambda x: DataManager.adjust_col(x, new_type))
-            print(cols)
-            print(data[cols])
-                
-            data = data.apply(lambda col: type_map[new_type](col))
-            self.df[cols] = data.copy()
-            if new_type == 'category' and new_categories:
-                col_cat = pd.DataFrame()
-                col_cat[cols] = self.df[cols].copy()
-                self.df[cols] = pd.Categorical(col_cat[cols]).rename_categories(new_categories)
+            cols = cols if isinstance(cols, list) else [cols]
+            if new_type == 'datetime':
+                for col in cols:
+                    self.df[col] = pd.to_datetime(self.df[col],
+                                                  format=date_format,
+                                                  errors='coerce')
+            else:
+                conversion = {col:new_type for col in cols}
+                self.df = self.df.astype(conversion)
+            
+            if new_categories and len(cols) == 1 and new_type =='category':
+                self.df[cols[0]] = pd.Categorical(self.df[cols[0]]
+                                                  ).rename_categories(new_categories)
             self.split_df()
         except KeyError:
-            raise KeyError(f"Tipo '{new_type}' no soportado para la columna '{cols}'.")    
+            raise KeyError(f"Tipo '{new_type}' no soportado para la columna '{cols}'.")
         except Exception as e:
                 raise Exception(f"Error al convertir la columna '{cols}': {e}")      
         
@@ -765,18 +747,31 @@ class DataManager():
     def save_df(self, path):
         self.df.to_csv(path, index=False, sep=';')
         
-    def input_vals(self, cols, select, eval_method=None):     
+    def imput_vals(self, select, cols, fix_value=None):     
         imputations = {
-        0: lambda col: self.df[col].fillna(self.df[col].mean()),     # Media
-        1: lambda col: self.df[col].fillna(self.df[col].median()),   # Mediana
-        2: lambda col: self.df[col].fillna(self.df[col].mode()[0]),  # Moda
-        3: lambda col: self.df[col].fillna(method='ffill'),          # Valor anterior
-        4: lambda col: self.df[col].fillna(method='bfill')           # Valor posterior
+        0: lambda col: self.df[col].fillna(self.df[col].mean(), 
+                                           inplace=True),           # Media
+        1: lambda col: self.df[col].fillna(self.df[col].median(), 
+                                           inplace=True),           # Mediana
+        2: lambda col: self.df[col].fillna(self.df[col].mode()[0], 
+                                           inplace=True),           # Moda
+        3: lambda col: self.df[col].fillna(method='ffill', 
+                                           inplace=True),           # Valor anterior
+        4: lambda col: self.df[col].fillna(method='bfill', 
+                                           inplace=True),           # Valor posterior
+        5: lambda col: self.df[col].fillna(fix_value,
+                                           inplace=True),           # Valor fijo
+        6: lambda col: self.df[col].fillna(pd.Timestamp(fix_value),
+                                           inplace=True)            # Fecha fija
         }
         
         if select in imputations:
+            cols = cols if isinstance(cols, list) else [cols]
             for col in cols:
-                self.df[col] = imputations[select](col)
+                try:
+                    imputations[select](col)
+                except Exception as e:
+                    raise Exception(f"Al imputar la columna '{col}': {e}")
         else:
             raise ValueError("Valor de select no válido. Debe ser 0, 1, 2, 3 o 4.")
             
@@ -894,17 +889,14 @@ class DataManager():
         self.df[col] = self.df[col].str.replace(old_string, new_string)
 
 if __name__ == "__main__":
-    df = pd.read_csv("C:/CEBANC/Programacion en IA/Python/Examen/data.csv", sep=";")
-    ve = DataManager(df)
-    
-    print(df['Target'].value_counts().index.tolist())
-    5
-    color = DataManager.hex_to_rgb('#FF4B4B')
-    df['Curricular units 1st sem (grade)'].max()
-    df.iloc[0]
 
-df = pd.DataFrame(dict(age=[5, 6, np.nan],
-                       born=[pd.NaT, pd.Timestamp('1939-05-27'),
-                             pd.Timestamp('1940-04-25')],
-                       name=[None,None,None],
-                       toy=[None, 'Batmobile', 'Joker']))
+    df = pd.read_csv('C:/Proyectos en GitHub/DataManagerApp/data/type_change.csv', sep=',')
+    df['float_col']
+    cols = ['float_col']
+    # cols = ['integer_col']
+
+    
+    dm = DataManager(df.copy())
+    dm.df[cols]
+    dm.imput_vals(0, cols)
+    dm.df[cols]

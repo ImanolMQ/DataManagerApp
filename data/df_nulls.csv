@@ -1,0 +1,8 @@
+int_col;float_col;str_col;date_col;bool_col
+1.0;1.1;a;;True
+2.0;;b;2020-01-01;
+;3.3;;2020-01-03;False
+4.0;4.4;d;;True
+5.0;;e;2020-01-05;
+;6.6;;;False
+7.0;7.7;g;2020-01-07;True

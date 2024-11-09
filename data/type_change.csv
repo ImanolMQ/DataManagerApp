@@ -1,0 +1,6 @@
+integer_col,float_col,string_col,date_col,boolean_col,category_col,mixed_col
+1,1.1,apple,2022-01-01,True,small,1
+2,2.2,banana,2022-02-15,False,medium,two
+3,,cherry,,True,large,3.0
+4,4.4,date,2022-04-01,,medium,
+5,5.5,elderberry,2022-05-05,False,small,four

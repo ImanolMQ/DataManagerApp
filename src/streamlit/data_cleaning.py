@@ -5,7 +5,9 @@ Created on Mon Oct 28 16:10:15 2024
 @author: Imanol
 """
 
+import pandas as pd
 import streamlit as st
+import math
 from src.streamlit.auxiliar import filter_dataframe
 
 class DataCleaner():
@@ -73,61 +75,100 @@ class DataCleaner():
                 st.success("Nombre cambiado con exito")
         elif change_name and not new_name:
                 st.error("Falta poner un nuevo nombre")
-
+                
     def change_type_columns(self):
-        # Modularizamos el tipo de cambio seleccionado
+    # Modularizamos el tipo de cambio seleccionado
         col_options = self.dm.tot_columns
-        change_type = st.radio("Selecciona cómo cambiar el tipo de las columnas:", 
-                               ('Múltiples columnas', 'Columna específica'))
+        self._change_type(col_options)
 
-        if change_type == 'Múltiples columnas':
-            self._change_type_multiple_columns(col_options)
-        else:
-            self._change_type_single_column(col_options)
-        st.table(self.dm.df.dtypes.to_frame().T)
-
-    def _change_type_multiple_columns(self, col_options):
-        # Cambio de tipo para múltiples columnas
+    def _change_type(self, col_options):
+        # Función común para manejar el cambio de tipo para una o más columnas
         cols = st.multiselect("Selecciona columnas a cambiar de tipo:", col_options)
-        new_type = st.selectbox("Selecciona el nuevo tipo:", 
-                                ['category', 'int', 'float', 'bool', 'datetime', 'string'])
-        date_format = st.text_input('Formato de fecha (Ej: %m/%d/%Y)') if new_type == 'datetime' else None
+        cols = cols if cols else col_options
+        #cols = cols if len(cols) > 1 else [cols]
         
-        if st.button("Cambiar tipos de las columnas", use_container_width=True) and cols:
-            self.dm.change_type(cols, new_type, date_format=date_format)
+        # Crear la tabla de tipos
+        dtype_table_container = st.empty()
+        self._display_dtype_table(cols, dtype_table_container)
 
-    def _change_type_single_column(self, col_options):
-        # Cambio de tipo para una sola columna con opciones personalizadas
-        col = st.selectbox("Selecciona la columna:", col_options)
+        # Selección del nuevo tipo
         new_type = st.selectbox("Selecciona el nuevo tipo:", 
-                                ['category', 'int', 'float', 'bool', 'datetime', 'string'])
-        new_categories = self._get_custom_categories(col) if new_type == 'category' else None
-        date_format = st.text_input('Formato de fecha (Ej: %m/%d/%Y)') if new_type == 'datetime' else None
-        
-        if st.button("Cambiar tipo de la columna") and col:
-            self.dm.change_type(col, new_type, new_categories=new_categories, date_format=date_format)
+                                sorted(['category', 'int64', 'float64',
+                                        'boolean', 'datetime', 'string']))
 
+        # Si el tipo es 'datetime', pedir el formato de la fecha
+        date_format = None
+        if new_type == 'datetime':
+            text_data = ("Formato fecha (por defecto %m/%d/%Y)\n\n" +
+                         "Ejemplos:\n\n" +
+                         "02/25/2024 → %m/%d/%Y\n\n" +
+                         "15-01-2022 → %d-%m-%Y\n\n" +
+                         "2022/01/15 14:30:45 → %Y/%m/%d %H:%M:%S")
+            date_format = st.text_input(text_data)
+            
+        new_categories = None
+        try:
+            if new_type == 'category' and len(cols) == 1:
+                if st.checkbox("Cambiar nombre de las categorías"):
+                    df_nulls, _, _ = self.dm.show_nulls(cols)
+                    if df_nulls.empty:
+                        new_categories = self._get_custom_categories(cols[0])
+                    else:
+                        st.error("Antes de cambiar los nombres de las " +
+                                 "categorías, tratar los valores nulos.")
+        except Exception as e:
+            st.error(f"{e}")
+
+        # Botón para aplicar el cambio de tipo
+        if st.button("Cambiar tipo de las columnas"):
+            try:
+                self.dm.change_type(cols, new_type,
+                                    new_categories=new_categories,
+                                    date_format=date_format)
+                # Actualizar la tabla de tipos
+                self._display_dtype_table(cols, dtype_table_container)
+                st.success(f"Cambio a {new_type} correctamente realizado")
+            except Exception as e:
+                st.error(f"Error al cambiar tipo de columna: {e}")
+
+    def _display_dtype_table(self, cols, container):
+        # Mostrar la tabla de tipos de datos
+        dtype_table = pd.DataFrame(self.dm.df[cols]).dtypes.to_frame().T
+        st.session_state.dtype_table = dtype_table  # Actualizamos la tabla en session_state
+
+        # Contenedor para actualizar la tabla
+        with container:
+            st.table(st.session_state.dtype_table)
+        
     def _get_custom_categories(self, col):
         # Método para capturar nombres personalizados de categorías
         categories = self.dm.df[col].unique().tolist()
-        new_categories = [st.text_input(f"Nuevo nombre para '{val}':", val) or str(val) for val in categories]
+        try:
+            new_categories = [st.text_input(f"Nuevo nombre para '{str(val)}':", val) or str(val) for val in categories]
+        except Exception as e:
+            raise RuntimeError(f"Error al obtener categorías personalizadas: {e}")
         return new_categories if len(new_categories) == len(categories) else None
 
     def edit_null_values(self):
         
         # Reestructuración de imputación y eliminación de valores nulos
         options = {
-            'Elimina filas': (self.dm.drop_na, 0),
-            'Elimina columnas': (self.dm.drop_na, 1),
-            'Imputar con la media': self._impute_vals(0),
-            'Imputar con la mediana': self._impute_vals(1),
-            'Imputar con la moda': self._impute_vals(2),
-            'Imputar con valor anterior': self._impute_vals(3)
+            'Eliminar filas': (self.dm.drop_na, 0),
+            'Eliminar columnas': (self.dm.drop_na, 1),
+            'Imputar con la media': (self._impute_vals, 0),
+            'Imputar con la mediana':( self._impute_vals, 1),
+            'Imputar con la moda': (self._impute_vals, 2),
+            'Imputar con valor anterior': (self._impute_vals, 3),
+            'Imputar con valor posterior': (self._impute_vals, 4),
+            'Imputar valor fijo': (self._impute_vals, 5),
+            'Imputar fecha': (self._impute_vals, 6),
         }
         method = st.radio("Selecciona cómo tratar valores nulos:",
                           list(options.keys()))
+        cols = self.dm.tot_columns
+        fix_value = None
         
-        if method.split()[0] == 'Elimina':
+        if method.split()[0] == 'Eliminar':
             txt_rows = ("Opción 1. Hay un valor nulo en alguna de las columnas seleccionadas\n\n" +
                         "Opción 2. Todas las columnas seleccionadas son nulas")
             txt_cols = ("Opción 1. La columna tiene algún valor nulo \n\n" +
@@ -139,7 +180,6 @@ class DataCleaner():
                                                evaluation_methods.keys())
             selected_evaluation = evaluation_methods[selected_evaluation]
             txt_default = '(Si no se escogen se evaluarán todas las columnas):'
-            cols = self.dm.tot_columns
             text = ("Especifica las columnas a las que" +
                     " tratar los valores nulos " + txt_default)
             if selected_evaluation == 'any':
@@ -155,28 +195,52 @@ class DataCleaner():
                             'tengan valores nulos a la vez en un registro '  + txt_default)
                 if method == 'Elimina columnas':
                     text = ('Especifica que columnas quieres eliminar si tienen' +
-                            ' todos los valores nulos ' + txt_default)
+                            ' todos los valores nulos ' + txt_default)                 
+            
         if method.split()[0] == 'Imputar':
             text = ('Especifica en que columnas quieres imputar valores:')
             selected_evaluation = 'any'
-            cols = self.dm.num_columns
             
-        selected_cols = st.multiselect(text,
-                                       cols)
+        selected_cols = st.multiselect(text, cols)
         selected_cols = cols if not selected_cols else selected_cols
         
-        # if st.checkbox('Mostrar filas con valores nulos de las columnas' +
-        #                 ' introducidas'):
-        #st.dataframe(self.dm.show_nulls(selected_cols, selected_evaluation))
+        returned_nulls = self.dm.show_nulls(selected_cols, selected_evaluation)
+        returned_df = (self.dm.df.copy(), 'any', selected_cols)
+        
+        is_drop = method.split()[0] == 'Eliminar'
+        returned = returned_nulls if is_drop else returned_df
+        
+        is_fix = method in ['Imputar valor fijo', 'Imputar fecha']
+        if is_fix:
+            if method == 'Imputar valor fijo':
+                fix_value = st.text_input("Valor fijo para imputar:")
+            
+            if method == 'Imputar fecha':
+                fix_value = st.text_input("Fecha fija para imputar:")
         
         if st.button("Aplicar", use_container_width=True):
-            func, axis = options[method]
-            func(axis, selected_cols, selected_evaluation)
             
-        return self.dm.show_nulls(selected_cols, selected_evaluation)
+            try:
+                func, param = options[method]
+                
+                if method.split()[0] == 'Eliminar':
+                    func(param, selected_cols, selected_evaluation)
+                    returned = self.dm.show_nulls(selected_cols,
+                                                  selected_evaluation)
+                if method.split()[0] == 'Imputar':   
+                    func(param, cols = selected_cols, fix_value = fix_value)
+                    returned = (self.dm.df.copy(), 'any', selected_cols)
+            except Exception as e:
+                st.error(f"{e}")
+            
+        return returned
+            
+        
 
-    def _impute_vals(self, imp_type):
-        return lambda cols: self.dm.input_vals(cols, imp_type)
+    def _impute_vals(self, imp_type, cols, fix_value):
+        cols = cols if isinstance(cols, list) else [cols]
+        for col in cols:
+            self.dm.imput_vals(imp_type, cols, fix_value)
                     
     def show_df_with_rows_range(self):
         df = self.dm.df.copy()
@@ -260,3 +324,4 @@ class DataCleaner():
         old_str, new_str = st.text_input('Texto a corregir'), st.text_input('Nuevo texto')
         if st.button("Reemplazar texto", use_container_width=True):
             self.dm.string_replace(cols, old_str, new_str)
+
