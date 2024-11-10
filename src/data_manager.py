@@ -19,8 +19,10 @@ from pandas.api.types import (
     is_numeric_dtype,
     is_object_dtype,
 )
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import (
+    StandardScaler, MinMaxScaler,
+    MaxAbsScaler, RobustScaler
+    )
 from plotly.subplots import make_subplots
 import plotly.express as px
 import plotly.figure_factory as ff
@@ -33,13 +35,14 @@ class DataManager():
                  'Cream': '#f3e3e2'}
     data_types = []
 
-    def __init__(self, df):
+    def __init__(self, df, scales=None):
         self.df = self.process_df(df)
         self.tot_columns = self.df.columns.tolist()
         self.split_df()
         self.shape = self.df.shape
         self.n_rows = self.df.shape[0]
         self.n_columns = self.df.shape[1]
+        self._create_dict_scales(scales)
     
     @staticmethod
     def process_df(df):
@@ -52,6 +55,16 @@ class DataManager():
         self.df_cat = self.df.select_dtypes(exclude="number")
         self.num_columns = self.df_num.columns.tolist()
         self.cat_columns = self.df_cat.columns.tolist()
+        
+    def _create_dict_scales(self, scales=None):
+        if scales:
+            self.scales = scales
+        else:
+            self.scales = {column:None for column in self.tot_columns}
+
+    def _add_scaler(self, columns, scaler):
+        for column in columns:
+            self.scales[column] = scaler
         
     def show_info(self):
         self.df.info()
@@ -841,13 +854,85 @@ class DataManager():
         self.n_rows = self.df.shape[0]
         self.n_columns = self.df.shape[1]
         
-    def standarize_columns(self, cols):
-        scaler = StandardScaler()
-        self.df[cols] = scaler.fit_transform(self.df[cols])
+    def _apply_scaler(self, columns, scaler_class, **scaler_kwargs):
+        columns = [columns] if isinstance(columns, str) else columns
+        for column in columns:
+            scaler = scaler_class(**scaler_kwargs)
+            data = self.df[column].values.reshape(-1, 1)
+            self.df[column] = scaler.fit_transform(data)
+            self._add_scaler([column], scaler)
+        return self.scales
+
+    def min_max_scaling(self, columns, range_min=0, range_max=1):
+        return self._apply_scaler(columns, MinMaxScaler, feature_range=(range_min, range_max))
+
+    def z_score_standardization(self, columns):
+        return self._apply_scaler(columns, StandardScaler)
+
+    def max_abs_scaling(self, columns):
+        return self._apply_scaler(columns, MaxAbsScaler)
+
+    def robust_scaling(self, columns):
+        return self._apply_scaler(columns, RobustScaler)
         
-    def normalize_columns(self, cols):
-        normalizer = MinMaxScaler()
-        self.df[cols] = normalizer.fit_transform(self.df[cols])
+    # def min_max_scaling(self, columns, range_min=0, range_max=1): 
+    #     columns = [columns] if isinstance(columns, str) else columns
+    #     for column in columns:
+    #         scaler = MinMaxScaler(feature_range=(range_min, range_max))
+    #         data = self.df[column].values.reshape(-1,1)
+    #         self.df[column] = scaler.fit_transform(data)
+    #         self._add_scaler([column], scaler)
+    #     return self.scales
+
+    # def z_score_standardization(self, columns):
+    #     columns = [columns] if isinstance(columns, str) else columns
+    #     for column in columns:
+    #         scaler = StandardScaler()
+    #         data = self.df[column].values.reshape(-1,1)
+    #         self.df[column] = scaler.fit_transform(data)
+    #         self._add_scaler([column], scaler)
+    #     return self.scales
+        
+    # def max_abs_scaling(self, columns):
+    #     columns = [columns] if isinstance(columns, str) else columns
+    #     for column in columns:
+    #         scaler = MaxAbsScaler()
+    #         data = self.df[column].values.reshape(-1,1)
+    #         self.df[column] = scaler.fit_transform(data)
+    #         self._add_scaler([column], scaler)
+    #     return self.scales
+        
+    # def robust_scaling(self, columns):
+    #     columns = [columns] if isinstance(columns, str) else columns
+    #     for column in columns:
+    #         scaler = RobustScaler()
+    #         data = self.df[column].values.reshape(-1,1)
+    #         self.df[column] = scaler.fit_transform(data)
+    #         self._add_scaler([column], scaler)
+    #     return self.scales
+        
+    def inverse_scaling(self, columns):
+        columns = [columns] if isinstance(columns, str) else columns
+        for column in columns:
+            if self.scales[column] != None:
+                scaler = self.scales[column]
+                data = self.df[column].values.reshape(-1,1)
+                self.df[column] = scaler.inverse_transform(data)
+                self.scales[column] = None
+            else:
+                raise Exception(f"En la columna {column} no hay ningún " +
+                                "escalado guardado.")
+        return self.scales
+    
+    # def set_scaling(self, columns, scaler):
+    #     columns = [columns] if isinstance(columns, str) else columns
+    #     for column in columns:
+    #         scaler = scaler()
+    #         data = self.df[column].values.reshape(-1,1)
+    #         self.df[column] = scaler.fit_transform(data)
+    #         self._add_scaler([column], scaler)
+    #     return self.scales
+    
         
     def return_column_outliers(self, col):
         Q1 = self.df[col].quantile(0.25)
@@ -889,14 +974,12 @@ class DataManager():
         self.df[col] = self.df[col].str.replace(old_string, new_string)
 
 if __name__ == "__main__":
-
-    df = pd.read_csv('C:/Proyectos en GitHub/DataManagerApp/data/type_change.csv', sep=',')
-    df['float_col']
-    cols = ['float_col']
-    # cols = ['integer_col']
-
     
-    dm = DataManager(df.copy())
-    dm.df[cols]
-    dm.imput_vals(0, cols)
-    dm.df[cols]
+    df = pd.read_csv('data/norm_std.csv', sep=";")
+    dm = DataManager(df)
+    dm.df['Edad']
+    dm.min_max_scaling('Edad')
+    dm.df['Edad']
+    dm.scales
+    dm.inverse_scaling('Edad')
+    pass

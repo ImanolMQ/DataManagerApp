@@ -17,7 +17,7 @@ st.set_page_config(**PAGE_CONFIG)
 
 def main():
     if st.session_state.data_loaded:
-        dm = DataManager(st.session_state.df)
+        dm = DataManager(st.session_state.df, scales=st.session_state.scales)
         dc = DataCleaner(dm)
         st.session_state.df = dc.render()
     else:

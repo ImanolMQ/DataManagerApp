@@ -120,7 +120,7 @@ class DataCleaner():
             st.error(f"{e}")
 
         # Botón para aplicar el cambio de tipo
-        if st.button("Cambiar tipo de las columnas"):
+        if st.button("Cambiar tipo de las columnas", use_container_width=True):
             try:
                 self.dm.change_type(cols, new_type,
                                     new_categories=new_categories,
@@ -275,21 +275,58 @@ class DataCleaner():
 
     def normalize_and_standarize(self):
         options = {
-            'Normalizar': self.normalize,
-            'Estandarizar': self.standarize
+            'Min-Max Scaling': {'func': self.dm.min_max_scaling,
+                                'text':'Escala los datos al rango [0,1]'},
+            'Min-Max Scaling Personalizado': {'func': self.dm.min_max_scaling,
+                                              'text': 'Escala los datos al ' +
+                                              'rango especificado'},
+            'Z-score': {'func': self.dm.z_score_standardization,
+                                'text': ('Normaliza a media 0 y desviación' +
+                                         ' estándar de 1')},
+            'MaxAbs Scaling': {'func': self.dm.max_abs_scaling,
+                                'text': ('Escala los datos por el valor ' +
+                                         'absoluto máximo, preservando ceros ' +
+                                         'y signos.')},
+            'Robust Scaling': {'func': self.dm.robust_scaling,
+                                'text': ('Estandariza usando la mediana y el ' +
+                                         'rango intercuartílico, siendo menos ' +
+                                         'sensible a los outliers.')}
         }
         selected_option = st.radio("Seleccione la opción:", list(options.keys()))
-        options[selected_option]()
+        
+        st.info(options[selected_option]['text'])
+        
+        is_personalized = selected_option == 'Min-Max Scaling Personalizado'
+        if is_personalized:
+            col1, col2 = st.columns(2)
+            with col1:
+                min_s = st.number_input('Minimo: ', value=0)
+            with col2:
+                max_s = st.number_input('Máximo: ', value=1)
+        
+        cols = st.multiselect("Selecciona columnas en las que aplicar\n\n" + 
+                              "(En caso de no seleccionar se aplica sobre todas):",
+                              self.dm.num_columns)
+        
+        cols = cols if cols else self.dm.num_columns
+        
+        if st.button('Realizar escalado', use_container_width=True):
+            if is_personalized:
+                st.session_state.scales = options[selected_option]['func'](cols,
+                                                                           min_s,
+                                                                           max_s)
+            else:
+                st.session_state.scales = options[selected_option]['func'](cols)
+            
+        if st.button('Deshacer ultimo escalado de las columnas seleccionadas',
+                     use_container_width=True):
+            try:
+                st.session_state.scales = self.dm.inverse_scaling(cols)
+            except Exception as e:
+                st.error(f'{e}')
+                
+        
 
-    def normalize(self):
-        cols = st.multiselect("Selecciona columnas a normalizar:", self.dm.num_columns)
-        if st.button('Normalizar'):
-            self.dm.normalize_columns(cols)
-
-    def standarize(self):
-        cols = st.multiselect("Selecciona columnas a estandarizar:", self.dm.num_columns)
-        if st.button('Estandarizar'):
-            self.dm.standarize_columns(cols)
 
     def handling_outliers(self):
         cols = st.selectbox("Selecciona columna para outliers:", self.dm.num_columns)
@@ -325,3 +362,31 @@ class DataCleaner():
         if st.button("Reemplazar texto", use_container_width=True):
             self.dm.string_replace(cols, old_str, new_str)
 
+# import pandas as pd
+# import numpy as np
+
+# # Crear un DataFrame de ejemplo para pruebas de normalización y estandarización
+# np.random.seed(42)  # Fijar la semilla para reproducibilidad
+
+# # Crear el DataFrame
+# df = pd.DataFrame({
+#     'Edad': np.random.randint(18, 65, size=100),               # Edad entre 18 y 65
+#     'Ingresos': np.random.normal(50000, 15000, 100),           # Ingresos con media 50000 y desviación estándar 15000
+#     'Calificación': np.random.uniform(1, 5, 100),              # Calificación en un rango de 1 a 5
+#     'Experiencia Laboral (años)': np.random.randint(0, 40, 100) # Años de experiencia laboral
+# })
+
+# # Añadir una columna con valores típicos y algunos outliers
+# # Generar valores de deuda normales en el rango 0 a 50000
+# deuda_normal = np.random.normal(20000, 5000, 95)
+
+# # Crear algunos outliers
+# deuda_outliers = np.array([200000, 300000, 150000, 250000, 500000])
+
+# # Combinar los valores normales con los outliers
+# deuda = np.concatenate([deuda_normal, deuda_outliers])
+
+# # Añadir la nueva columna al DataFrame
+# df['Deuda'] = deuda
+
+# df.to_csv('data/norm_std.csv', index=False, sep=";")

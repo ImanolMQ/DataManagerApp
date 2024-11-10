@@ -16,6 +16,7 @@ st.title("Carga del Dataset")
 # Inicialización de estado de sesión
 if 'data_loaded' not in st.session_state:
     st.session_state.data_loaded = False
+    
 
 # Instancias y listas útiles
 xtra_info = ExtraInformation()
@@ -90,6 +91,9 @@ if st.button("Cargar DataFrame"):
             # Vista previa del DataFrame
             st.write("Vista previa del DataFrame:")
             st.dataframe(df.head(), use_container_width=True)
+            
+            # Añadimos la variables de ecalado de datos
+            st.session_state.scales = {}
 
         except Exception as e:
             st.error(f"No se pudo cargar el DataFrame. Error: {e}")
