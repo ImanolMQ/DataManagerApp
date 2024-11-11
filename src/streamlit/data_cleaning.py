@@ -163,8 +163,8 @@ class DataCleaner():
             'Imputar valor fijo': (self._impute_vals, 5),
             'Imputar fecha': (self._impute_vals, 6),
         }
-        method = st.radio("Selecciona cómo tratar valores nulos:",
-                          list(options.keys()))
+        method = st.selectbox("Selecciona cómo tratar valores nulos:",
+                              list(options.keys()))
         cols = self.dm.tot_columns
         fix_value = None
         
@@ -234,8 +234,6 @@ class DataCleaner():
                 st.error(f"{e}")
             
         return returned
-            
-        
 
     def _impute_vals(self, imp_type, cols, fix_value):
         cols = cols if isinstance(cols, list) else [cols]
@@ -303,6 +301,8 @@ class DataCleaner():
                 min_s = st.number_input('Minimo: ', value=0)
             with col2:
                 max_s = st.number_input('Máximo: ', value=1)
+                
+        # st.markdown(self.dm.scales)
         
         cols = st.multiselect("Selecciona columnas en las que aplicar\n\n" + 
                               "(En caso de no seleccionar se aplica sobre todas):",
@@ -325,8 +325,6 @@ class DataCleaner():
             except Exception as e:
                 st.error(f'{e}')
                 
-        
-
 
     def handling_outliers(self):
         cols = st.selectbox("Selecciona columna para outliers:", self.dm.num_columns)

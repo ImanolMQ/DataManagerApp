@@ -60,11 +60,11 @@ class DataManager():
         if scales:
             self.scales = scales
         else:
-            self.scales = {column:None for column in self.tot_columns}
+            self.scales = {column:[] for column in self.tot_columns}
 
     def _add_scaler(self, columns, scaler):
         for column in columns:
-            self.scales[column] = scaler
+            self.scales[column].append(scaler)
         
     def show_info(self):
         self.df.info()
@@ -875,63 +875,14 @@ class DataManager():
     def robust_scaling(self, columns):
         return self._apply_scaler(columns, RobustScaler)
         
-    # def min_max_scaling(self, columns, range_min=0, range_max=1): 
-    #     columns = [columns] if isinstance(columns, str) else columns
-    #     for column in columns:
-    #         scaler = MinMaxScaler(feature_range=(range_min, range_max))
-    #         data = self.df[column].values.reshape(-1,1)
-    #         self.df[column] = scaler.fit_transform(data)
-    #         self._add_scaler([column], scaler)
-    #     return self.scales
-
-    # def z_score_standardization(self, columns):
-    #     columns = [columns] if isinstance(columns, str) else columns
-    #     for column in columns:
-    #         scaler = StandardScaler()
-    #         data = self.df[column].values.reshape(-1,1)
-    #         self.df[column] = scaler.fit_transform(data)
-    #         self._add_scaler([column], scaler)
-    #     return self.scales
-        
-    # def max_abs_scaling(self, columns):
-    #     columns = [columns] if isinstance(columns, str) else columns
-    #     for column in columns:
-    #         scaler = MaxAbsScaler()
-    #         data = self.df[column].values.reshape(-1,1)
-    #         self.df[column] = scaler.fit_transform(data)
-    #         self._add_scaler([column], scaler)
-    #     return self.scales
-        
-    # def robust_scaling(self, columns):
-    #     columns = [columns] if isinstance(columns, str) else columns
-    #     for column in columns:
-    #         scaler = RobustScaler()
-    #         data = self.df[column].values.reshape(-1,1)
-    #         self.df[column] = scaler.fit_transform(data)
-    #         self._add_scaler([column], scaler)
-    #     return self.scales
-        
     def inverse_scaling(self, columns):
         columns = [columns] if isinstance(columns, str) else columns
-        for column in columns:
-            if self.scales[column] != None:
-                scaler = self.scales[column]
+        for column in columns:         
+            if self.scales[column]:
+                scaler = self.scales[column].pop()
                 data = self.df[column].values.reshape(-1,1)
-                self.df[column] = scaler.inverse_transform(data)
-                self.scales[column] = None
-            else:
-                raise Exception(f"En la columna {column} no hay ningún " +
-                                "escalado guardado.")
+                self.df[column] = scaler.inverse_transform(data)         
         return self.scales
-    
-    # def set_scaling(self, columns, scaler):
-    #     columns = [columns] if isinstance(columns, str) else columns
-    #     for column in columns:
-    #         scaler = scaler()
-    #         data = self.df[column].values.reshape(-1,1)
-    #         self.df[column] = scaler.fit_transform(data)
-    #         self._add_scaler([column], scaler)
-    #     return self.scales
     
         
     def return_column_outliers(self, col):
