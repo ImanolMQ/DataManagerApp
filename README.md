@@ -1,7 +1,9 @@
-# Aplicación de Análisis y Limpieza de Datos en CSV, XLSX y JSON.
+# Aplicación Web para Limpieza, Análisis y Visualización de Datos (CSV, XLSX, JSON).
 
 **Descripción**  
 Esta es una aplicación web desarrollada en Python y Streamlit que permite a los usuarios realizar todos los pasos de limpieza, análisis y visualización de datos en archivos CSV, XLSX y JSON sin necesidad de programar. La app está diseñada para usuarios no técnicos, permitiéndoles interactuar fácilmente con sus datos a través de una interfaz visual de botones y opciones.
+
+
 
 ## Funcionalidades Principales
 - **Cargar archivos** y visualizar su contenido.
@@ -16,8 +18,6 @@ Esta es una aplicación web desarrollada en Python y Streamlit que permite a los
 - **Visualización de Datos**:
   - Gráficos interactivos (barras, líneas, histogramas, dispersión, etc.) con Plotly y Seaborn.
   - Mapas de calor y gráficos de correlación para análisis de relaciones.
-- **Análisis Predictivo**:
-  - Funcionalidades básicas de aprendizaje automático usando scikit-learn (como regresión lineal y clasificación).
 
 ## Tecnologías Utilizadas
 Esta aplicación utiliza las siguientes bibliotecas:
