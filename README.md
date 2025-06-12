@@ -28,7 +28,7 @@ Esta aplicación utiliza las siguientes bibliotecas:
 - **Soporte Interactivo**: `IPython`.
 
 ## Acceso a la Aplicación
-No es necesario instalar ningún software o paquete para usar esta aplicación. Simplemente accede a la dirección de la app en Streamlit y comienza a trabajar con tus datos de inmediato. [Enlace a la aplicación](URL_DE_LA_APP)
+No es necesario instalar ningún software o paquete para usar esta aplicación. Simplemente accede a la dirección de la app en Streamlit y comienza a trabajar con tus datos de inmediato. [Enlace a la aplicación](https://datamanager-imq.streamlit.app/)
 
 ## Uso
 1. **Cargar Archivo**: Sube un archivo CSV desde tu computadora. La aplicación mostrará una vista previa de los datos.
@@ -37,7 +37,6 @@ No es necesario instalar ningún software o paquete para usar esta aplicación. 
    - Eliminar duplicados.
    - Detectar y gestionar valores atípicos.
 3. **Análisis y Visualización**: Selecciona las opciones de análisis y visualización deseadas. Los gráficos se generarán automáticamente con las opciones seleccionadas.
-4. **Modelado Predictivo (Opcional)**: Realiza análisis predictivo simple configurando las opciones de modelo, como regresión o clasificación.
 
 ## Ejemplo de Uso
 Aquí tienes una captura de pantalla de la interfaz de la app y algunos ejemplos de gráficos generados:
